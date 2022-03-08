@@ -1,0 +1,1 @@
+export const GET_REPOSITORY_LIST = "http://localhost:8000/repositories"
