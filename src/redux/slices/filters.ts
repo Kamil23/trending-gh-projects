@@ -15,7 +15,6 @@ export interface InitialState {
 }
 
 interface RepositoryItem {
-  key?: number;
   author: string | undefined;
   description: string;
   language: string;

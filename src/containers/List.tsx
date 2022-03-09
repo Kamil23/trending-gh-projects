@@ -9,6 +9,7 @@ import { sortList } from "../redux/slices/filters";
 const ListFunctions = styled.div`
   margin: 16px 0;
   width: 100%;
+  max-width: 960px;
   display: flex;
   justify-content: flex-end;
 `;
@@ -44,7 +45,7 @@ const List: FC<ListProps> = (props: ListProps) => {
       <ListFunctions>
         <SortWrapper>
           Sort by:<Select onChange={sortByStars}>
-            <option disabled selected>Select...</option>
+            <option disabled selected>Default</option>
             {SORT_BY_OPTIONS.map(({ name, value }) => 
               <option value={value}>{name}</option>)}
           </Select>
