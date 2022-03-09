@@ -1,20 +1,36 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Dispatch } from 'redux';
-import { GET_REPOSITORY_LIST } from '../../constants';
+import { REPOSITORIES_LIST_URL, LANGUAGES_URL } from '../../constants';
+import { Filters, SortOption } from '../../interfaces';
 
-interface InitialState {
+export interface InitialState {
   loading: Boolean | null;
   error:  unknown | null;
   time: "daily" | "weekly" | "monthly" | null;
-  programmingLang: String | null;
-  list: TrendsList;
+  sort: SortOption | null;
+  programmingLang: LanguageItem | null;
+  repositoriesList: RepositoriesList;
+  filteredList: RepositoriesList;
+  languagesList: LanguagesList;
 }
 
-interface ListItem {
-  id: number; label: string; key: any
+interface RepositoryItem {
+  key?: number;
+  author: string | undefined;
+  description: string;
+  language: string;
+  name: string;
+  stars: number;
+  url: string;
 }
 
-interface TrendsList extends Array<ListItem>{}
+export interface LanguageItem {
+  urlParam: string;
+  name: string | null;
+}
+
+export interface RepositoriesList extends Array<RepositoryItem>{}
+export interface LanguagesList extends Array<LanguageItem>{}
 
 const initialState: InitialState = {
   //state
@@ -24,9 +40,12 @@ const initialState: InitialState = {
   //filters
   time: null,
   programmingLang: null,
+  sort: null,
 
   //data
-  list: []
+  repositoriesList: [],
+  filteredList: [],
+  languagesList: []
 };
 
 const slice = createSlice({
@@ -46,9 +65,22 @@ const slice = createSlice({
     selectProgrammingLang(state, action: PayloadAction<InitialState["programmingLang"]>) {
       state.programmingLang = action.payload;
     },
-    getListSuccess(state, action: PayloadAction<TrendsList>) {
+    getRepositoriesListSuccess(state, action: PayloadAction<RepositoriesList>) {
       state.loading = false;
-      state.list = action.payload;
+      state.repositoriesList = action.payload;
+      state.filteredList = action.payload;
+    },
+    getLanguagesListSuccess(state, action: PayloadAction<LanguagesList>) {
+      state.languagesList = action.payload;
+    },
+    sortList(state, action: PayloadAction<{data: RepositoriesList, type: String}>) {
+      const { data, type } = action.payload;
+      const dataCopy = [...data];
+      if (type === 'descending') {
+        state.filteredList = dataCopy.sort((a: RepositoryItem, b: RepositoryItem) => b.stars - a.stars);
+      } else if (type === 'ascending') {
+        state.filteredList = dataCopy.sort((a: RepositoryItem, b: RepositoryItem) => a.stars - b.stars);
+      }
     },
   }
 });
@@ -58,14 +90,37 @@ export default slice.reducer;
 export const {
   selectTime,
   selectProgrammingLang,
+  sortList
 } = slice.actions;
 
-export async function getList(values: Array<{ language: String, since: String }>) {
+export function getRepositoriesList(lang: string, time: any) {
   return async (dispatch: Dispatch) => {
     dispatch(slice.actions.startLoading());
     try {
-      const response: Response = await fetch(`${GET_REPOSITORY_LIST}?${values.toString()}`);
-      dispatch(slice.actions.getListSuccess((<any>response).data));
+      const params = {
+        "language": lang,
+        "since": time
+      };
+      
+      const query: string = Object.keys(params)
+        .map((k: string) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k as keyof typeof params]))
+        .join('&');
+
+      const response: Response = await fetch(`${REPOSITORIES_LIST_URL}?${query}`);
+      const data = await response.json();
+      dispatch(slice.actions.getRepositoriesListSuccess(data));
+    } catch (err) {
+      dispatch(slice.actions.hasError(err));
+    }
+  };
+}
+
+export function getProgrammingLanguages() {
+  return async (dispatch: Dispatch) => {
+    try {
+      const response: Response = await fetch(LANGUAGES_URL);
+      const data = await response.json();
+      dispatch(slice.actions.getLanguagesListSuccess(data));
     } catch (err) {
       dispatch(slice.actions.hasError(err));
     }
