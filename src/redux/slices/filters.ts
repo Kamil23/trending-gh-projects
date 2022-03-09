@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Dispatch } from 'redux';
 import { REPOSITORIES_LIST_URL, LANGUAGES_URL } from '../../constants';
-import { Filters, SortOption } from '../../interfaces';
+import { SortOption } from '../../interfaces';
 
 export interface InitialState {
   loading: Boolean | null;
